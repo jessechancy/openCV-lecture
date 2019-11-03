@@ -251,7 +251,6 @@ class App(object):
     def timerFired(app): pass           # respond to timer events
     def sizeChanged(app): pass          # respond to window size changes
     def cameraFired(app): pass          # respond to camera events
-    def drawCamera(app, canvas): pass   # draws camera
 
     ####################################
     # Implementation:
@@ -259,7 +258,7 @@ class App(object):
 
     def __init__(app, width=300, height=300, x=0, y=0, title=None, autorun=True, mvcCheck=True, logDrawingCalls=True):
         app.winx, app.winy, app.width, app.height = x, y, width, height
-        app.timerDelay = 100     # milliseconds
+        app.timerDelay = 10     # milliseconds
         app.mouseMovedDelay = 50 # ditto
         app._title = title
         app._mvcCheck = mvcCheck
@@ -269,6 +268,7 @@ class App(object):
         #Start Camera Capture
         app.cameraIndex = 0
         app.camera = cv2.VideoCapture(app.cameraIndex)
+        app.frame = None
         if autorun: app.run()
 
     def setSize(app, width, height):
@@ -394,15 +394,13 @@ class App(object):
         app._canvas.loggedDrawingCalls = [ ]
         app._canvas.logDrawingCalls = app._logDrawingCalls
         hash1 = getHash(app) if app._mvcCheck else None
-        _, app.frame = app.camera.read()
-        app.cameraFired()
         app._canvas.delete(ALL)
         app.drawCamera(app._canvas)
         try:            
             app.redrawAll(app._canvas)
             hash2 = getHash(app) if app._mvcCheck else None
-            # if (hash1 != hash2):
-            #     app._mvcViolation('you may not change the app state (the model) in redrawAll (the view)')
+            if (hash1 != hash2):
+                app._mvcViolation('you may not change the app state (the model) in redrawAll (the view)')
         finally:
             app._canvas.inRedrawAll = False
         app._canvas.update()
@@ -521,9 +519,11 @@ class App(object):
 
     @_safeMethod
     def _timerFiredWrapper(app):
-        if (not app._running) or (not app._methodIsOverridden('timerFired')): return
+        if (not app._running) or (not app._methodIsOverridden('timerFired') and app._methodIsOverridden('cameraFired')): return
         if (not app._paused):
             app.timerFired()
+            _, app.frame = app.camera.read()
+            app.cameraFired()
             app._redrawAllWrapper()
         app._deferredMethodCall(afterId='_timerFiredWrapper', afterDelay=app.timerDelay, afterFn=app._timerFiredWrapper)
 
@@ -575,8 +575,9 @@ class App(object):
         return tkImage
         
     def drawCamera(app, canvas):
-        app.tkImage = app.opencvToTk()
-        canvas.create_image(app.width / 2, app.height / 2, image=app.tkImage)
+        if app.frame is None: return
+        tkImage = app.opencvToTk()
+        canvas.create_image(app.width / 2, app.height / 2, image=tkImage)
 
     def updateTitle(app):
         app._title = app._title or type(app).__name__

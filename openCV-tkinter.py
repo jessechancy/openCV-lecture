@@ -2,12 +2,11 @@ from cmu_112_graphics import *
 from tkinter import *
 import cv2
 import time
-from threading import Thread
-from PIL import Image
+import numpy as np
 
 
 def appStarted(app):
-    pass
+    app.count = 0
     
 def cameraFired(app):
     """
@@ -15,8 +14,9 @@ def cameraFired(app):
     -app.frame is a numpy array
     -openCV images are all numpy arrays
     """
+    #Example: You can blur the Camera!
     pass
-
+    
 def keyPressed(app, event):
     if event.key == "q":
         App._theRoot.app.quit()
@@ -29,3 +29,4 @@ def timerFired(app):
         
 if __name__ == "__main__":
     runApp(width=1080, height=720)
+    os._exit(0)
