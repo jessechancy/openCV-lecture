@@ -1,6 +1,6 @@
 # openCV Lecture Materials
 
-##### Updated version of the 15-112 animation framework to include openCV integration with tkinter
+> Updated version of the 15-112 animation framework to include openCV integration with tkinter
 ##### Lecture Material from Fall 2019
 
 ## Usage
